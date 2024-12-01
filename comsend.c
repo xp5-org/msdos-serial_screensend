@@ -16,8 +16,8 @@ void sendtoserial(unsigned char byte) {
 int main() {
     unsigned char far *video;
     int row, col;
-    unsigned long divisor;
-    unsigned long divisor_lsb, divisor_msb;
+    unsigned int divisor;
+    unsigned int divisor_lsb, divisor_msb;
     FILE *output;
     video = (unsigned char far *)MK_FP(VIDEO_MEMORY, 0);  // pointer for video mem
 
@@ -28,10 +28,10 @@ int main() {
         return 1;
     }
 
-    // Calculate the divisor for the given baud rate
+    // set divisor for the baud rate
     divisor = (1843200 / (BAUD_RATE * 16));  // 1.8432 MHz UART clock
-    divisor_lsb = (unsigned long)(divisor & 0xFF);  // LSB
-    divisor_msb = (unsigned long)((divisor >> 8) & 0xFF);  // MSB
+    divisor_lsb = (unsigned int)(divisor & 0xFF);  // LSB
+    divisor_msb = (unsigned int)((divisor >> 8) & 0xFF);  // MSB
 
     // setup serial port
     outportb(COM1 + 1, 0x00);  // interrupts off
