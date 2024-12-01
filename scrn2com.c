@@ -5,11 +5,26 @@
 #define ROWS 25
 #define COLUMNS 80
 #define COM1 0x3F8
-#define BAUD_RATE 300 
+#define BAUD_RATE 1200 // set to a valid baudrate
+
+
+unsigned char far *detect_video_memory() {
+    union REGS regs;
+    unsigned char mode;
+    regs.h.ah = 0x0F;  // get current video mode
+    int86(0x10, &regs, &regs);
+    mode = regs.h.al; 
+
+    if (mode == 0x07) {  // monochrome
+        return (unsigned char far *)MK_FP(0xB000, 0);
+    } else {  // color mode for CGA EGA VGA
+        return (unsigned char far *)MK_FP(0xB800, 0);
+    }
+}
 
 
 void sendtoserial(unsigned char byte) {
-    while ((inportb(COM1 + 5) & 0x20) == 0);  // need to wait until tx buffer is empty
+    while ((inportb(COM1 + 5) & 0x20) == 0);  // wait until tx buffer is empty
     outportb(COM1, byte);  // send one byte
 }
 
@@ -19,7 +34,8 @@ int main() {
     unsigned int divisor;
     unsigned int divisor_lsb, divisor_msb;
     FILE *output;
-    video = (unsigned char far *)MK_FP(VIDEO_MEMORY, 0);  // pointer for video mem
+    video = detect_video_memory();  // get & set pointer for video mem
+
 
     // open output.txt with write access
     output = fopen("output.txt", "w");
@@ -55,8 +71,8 @@ int main() {
         fputc('\n', output);  // add a newline
 
         // for serial only, need both
-        sendtoserial(0x0D);  // Carriage Return
-        sendtoserial(0x0A);  // Line Feed
+        sendtoserial(0x0D);  // CR
+        sendtoserial(0x0A);  // LF
     }
 
     fclose(output);  // close file handle
